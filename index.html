@@ -1,0 +1,1137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Plant Growth Simulator</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Comic Sans MS', cursive, sans-serif;
+        }
+
+        body {
+            background: linear-gradient(to bottom, #87CEEB, #E0F7E9);
+            min-height: 100vh;
+            overflow-x: hidden;
+            color: #2d5016;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 20px;
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.8);
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            border: 3px solid #7a9c58;
+        }
+
+        h1 {
+            color: #4a7c3a;
+            font-size: 2.5rem;
+            text-shadow: 2px 2px 0 #c8e6c9;
+            margin-bottom: 10px;
+        }
+
+        .game-area {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .garden-section {
+            flex: 2;
+            min-width: 300px;
+            background: rgba(255, 255, 255, 0.8);
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            border: 3px solid #7a9c58;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .info-section {
+            flex: 1;
+            min-width: 250px;
+            background: rgba(255, 255, 255, 0.8);
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            border: 3px solid #7a9c58;
+        }
+
+        .garden-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            grid-gap: 15px;
+            margin-top: 20px;
+        }
+
+        .garden-plot {
+            background: #8bc34a;
+            border: 3px solid #5d8c2a;
+            border-radius: 10px;
+            height: 150px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-end;
+            position: relative;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: inset 0 -5px 0 rgba(0, 0, 0, 0.1);
+            perspective: 500px;
+        }
+
+        .garden-plot:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .plant {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-end;
+            transform-style: preserve-3d;
+        }
+
+        .plant-part {
+            position: absolute;
+            transition: all 0.5s;
+        }
+
+        .soil {
+            width: 100%;
+            height: 30px;
+            background: #795548;
+            border-radius: 0 0 10px 10px;
+            position: absolute;
+            bottom: 0;
+        }
+
+        .root {
+            width: 5px;
+            background: #8d6e63;
+            position: absolute;
+            bottom: 30px;
+            z-index: 1;
+        }
+
+        .stem {
+            width: 8px;
+            background: #4caf50;
+            position: absolute;
+            bottom: 30px;
+            z-index: 2;
+        }
+
+        .leaf {
+            width: 20px;
+            height: 15px;
+            background: #4caf50;
+            border-radius: 50%;
+            position: absolute;
+            z-index: 3;
+        }
+
+        .flower {
+            width: 25px;
+            height: 25px;
+            border-radius: 50%;
+            position: absolute;
+            z-index: 4;
+        }
+
+        .fruit {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            position: absolute;
+            z-index: 5;
+            transform-style: preserve-3d;
+            animation: sway 3s infinite ease-in-out;
+        }
+
+        @keyframes sway {
+            0%, 100% { transform: rotate(-2deg); }
+            50% { transform: rotate(2deg); }
+        }
+
+        .actions {
+            display: flex;
+            justify-content: space-around;
+            margin: 20px 0;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .action-btn {
+            padding: 10px 15px;
+            border: none;
+            border-radius: 50px;
+            background: #4caf50;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 4px 0 #388e3c;
+        }
+
+        .action-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 0 #388e3c;
+        }
+
+        .action-btn:active {
+            transform: translateY(1px);
+            box-shadow: 0 2px 0 #388e3c;
+        }
+
+        .action-btn.water {
+            background: #2196f3;
+            box-shadow: 0 4px 0 #0d47a1;
+        }
+
+        .action-btn.water:hover {
+            box-shadow: 0 6px 0 #0d47a1;
+        }
+
+        .action-btn.water:active {
+            box-shadow: 0 2px 0 #0d47a1;
+        }
+
+        .action-btn.feed {
+            background: #ff9800;
+            box-shadow: 0 4px 0 #e65100;
+        }
+
+        .action-btn.feed:hover {
+            box-shadow: 0 6px 0 #e65100;
+        }
+
+        .action-btn.feed:active {
+            box-shadow: 0 2px 0 #e65100;
+        }
+
+        .action-btn.fertilize {
+            background: #795548;
+            box-shadow: 0 4px 0 #3e2723;
+        }
+
+        .action-btn.fertilize:hover {
+            box-shadow: 0 6px 0 #3e2723;
+        }
+
+        .action-btn.fertilize:active {
+            box-shadow: 0 2px 0 #3e2723;
+        }
+
+        .stats {
+            display: flex;
+            justify-content: space-between;
+            margin: 20px 0;
+            padding: 15px;
+            background: #e8f5e9;
+            border-radius: 10px;
+            border: 2px solid #a5d6a7;
+        }
+
+        .stat {
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #2e7d32;
+        }
+
+        .fruit-selection {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            grid-gap: 10px;
+            margin: 20px 0;
+        }
+
+        .fruit-option {
+            padding: 10px;
+            background: #c8e6c9;
+            border-radius: 10px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            border: 2px solid #81c784;
+        }
+
+        .fruit-option:hover {
+            background: #a5d6a7;
+            transform: scale(1.05);
+        }
+
+        .fruit-option.selected {
+            background: #4caf50;
+            color: white;
+            border-color: #2e7d32;
+        }
+
+        .market {
+            margin-top: 20px;
+            padding: 15px;
+            background: #fff3e0;
+            border-radius: 10px;
+            border: 2px solid #ffb74d;
+        }
+
+        .market-options {
+            display: flex;
+            justify-content: space-around;
+            margin: 15px 0;
+        }
+
+        .market-btn {
+            padding: 10px 15px;
+            background: #ff9800;
+            border: none;
+            border-radius: 50px;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 4px 0 #e65100;
+        }
+
+        .market-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 0 #e65100;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 100;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            max-width: 500px;
+            width: 90%;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+            text-align: center;
+            position: relative;
+        }
+
+        .close-modal {
+            position: absolute;
+            top: 10px;
+            right: 15px;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: #777;
+        }
+
+        .planting-card {
+            text-align: left;
+            margin-top: 20px;
+            padding: 15px;
+            background: #f1f8e9;
+            border-radius: 10px;
+            border: 2px solid #c5e1a5;
+        }
+
+        .save-options {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 20px;
+        }
+
+        .save-btn {
+            padding: 10px 20px;
+            background: #2196f3;
+            color: white;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s;
+            box-shadow: 0 4px 0 #0d47a1;
+        }
+
+        .save-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 0 #0d47a1;
+        }
+
+        .save-btn.new-game {
+            background: #f44336;
+            box-shadow: 0 4px 0 #b71c1c;
+        }
+
+        .save-btn.new-game:hover {
+            box-shadow: 0 6px 0 #b71c1c;
+        }
+
+        .environment {
+            position: absolute;
+            pointer-events: none;
+        }
+
+        .cloud {
+            position: absolute;
+            background: white;
+            border-radius: 50%;
+            box-shadow: 0 0 20px rgba(255, 255, 255, 0.8);
+            opacity: 0.8;
+            animation: float 30s infinite linear;
+        }
+
+        .tree {
+            position: absolute;
+            bottom: 0;
+            width: 80px;
+            height: 120px;
+        }
+
+        .tree-trunk {
+            position: absolute;
+            bottom: 0;
+            left: 35px;
+            width: 10px;
+            height: 60px;
+            background: #8d6e63;
+        }
+
+        .tree-top {
+            position: absolute;
+            bottom: 50px;
+            left: 10px;
+            width: 60px;
+            height: 70px;
+            background: #4caf50;
+            border-radius: 50%;
+        }
+
+        .instructions {
+            margin-top: 20px;
+            padding: 15px;
+            background: #e3f2fd;
+            border-radius: 10px;
+            border: 2px solid #90caf9;
+        }
+
+        .growth-timer {
+            margin-top: 10px;
+            padding: 10px;
+            background: #ffecb3;
+            border-radius: 10px;
+            text-align: center;
+            font-weight: bold;
+        }
+
+        @media (max-width: 768px) {
+            .garden-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
+            .fruit-selection {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Plant Growth Simulator</h1>
+            <p>Grow fruits, learn about plants, and sell your harvest!</p>
+        </header>
+
+        <div class="game-area">
+            <div class="garden-section">
+                <h2>Your Garden</h2>
+                <div class="garden-grid" id="gardenGrid">
+                    <!-- Garden plots will be generated here -->
+                </div>
+                
+                <div class="actions">
+                    <button class="action-btn water" id="waterBtn">💧 Water</button>
+                    <button class="action-btn feed" id="feedBtn">🌱 Feed</button>
+                    <button class="action-btn fertilize" id="fertilizeBtn">🧪 Fertilize</button>
+                    <button class="action-btn" id="harvestBtn">✂️ Harvest</button>
+                </div>
+                
+                <div class="stats">
+                    <div class="stat">
+                        <div class="stat-label">Money</div>
+                        <div class="stat-value" id="money">$50</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-label">Plants</div>
+                        <div class="stat-value" id="plantCount">0/12</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-label">Day</div>
+                        <div class="stat-value" id="dayCount">1</div>
+                    </div>
+                </div>
+                
+                <div class="growth-timer" id="growthTimer">
+                    Next growth in: 3:00
+                </div>
+                
+                <div class="save-options">
+                    <button class="save-btn" id="saveBtn">Save Game</button>
+                    <button class="save-btn new-game" id="newGameBtn">New Game</button>
+                </div>
+            </div>
+            
+            <div class="info-section">
+                <h2>Plant a Fruit</h2>
+                <p>Select a fruit to plant in an empty garden plot:</p>
+                
+                <div class="fruit-selection" id="fruitSelection">
+                    <!-- Fruit options will be generated here -->
+                </div>
+                
+                <div class="market">
+                    <h2>Sell Your Harvest</h2>
+                    <p>Choose where to sell your fruits:</p>
+                    
+                    <div class="market-options">
+                        <button class="market-btn" id="marketBtn">Market</button>
+                        <button class="market-btn" id="groceryBtn">Grocery Store</button>
+                        <button class="market-btn" id="farmersBtn">Farmers Market</button>
+                    </div>
+                    
+                    <div id="inventory">
+                        <h3>Your Inventory</h3>
+                        <p id="inventoryList">No fruits harvested yet.</p>
+                    </div>
+                </div>
+                
+                <div class="instructions">
+                    <h3>How to Play</h3>
+                    <p>1. Select a fruit and click on an empty plot to plant it</p>
+                    <p>2. Plants automatically grow every 3 minutes</p>
+                    <p>3. Water, feed, and fertilize to speed up growth</p>
+                    <p>4. Harvest fruits when they're ready</p>
+                    <p>5. Sell your fruits to earn money</p>
+                    <p>6. Learn about plant parts and how to grow real fruits!</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Educational Modal -->
+    <div class="modal" id="educationalModal">
+        <div class="modal-content">
+            <span class="close-modal" id="closeModal">&times;</span>
+            <h2 id="modalTitle">Planting Guide</h2>
+            <div class="planting-card" id="plantingInfo">
+                <!-- Planting information will be inserted here -->
+            </div>
+            <button class="action-btn" id="continueBtn">Continue</button>
+        </div>
+    </div>
+
+    <script>
+        // Game data
+        const gameState = {
+            money: 50,
+            day: 1,
+            selectedFruit: null,
+            garden: Array(12).fill(null),
+            inventory: {},
+            growthTimer: 180, // 3 minutes in seconds
+            growthInterval: null,
+            prices: {
+                market: { min: 5, max: 10 },
+                grocery: { min: 8, max: 15 },
+                farmers: { min: 12, max: 20 }
+            }
+        };
+
+        // Fruits data with planting information
+        const fruits = [
+            {
+                name: 'Strawberry',
+                color: '#ff5252',
+                seedCost: 5,
+                growthTime: 3,
+                plantingInfo: 'Plant strawberry seeds in well-draining soil with plenty of sunlight. Keep soil moist but not waterlogged.'
+            },
+            {
+                name: 'Apple',
+                color: '#ff8a80',
+                seedCost: 10,
+                growthTime: 7,
+                plantingInfo: 'Apple trees need full sun and well-drained soil. Plant in spring after the last frost.'
+            },
+            {
+                name: 'Banana',
+                color: '#ffd54f',
+                seedCost: 8,
+                growthTime: 6,
+                plantingInfo: 'Banana plants need warm temperatures, plenty of water, and rich soil with good drainage.'
+            },
+            {
+                name: 'Orange',
+                color: '#ffb74d',
+                seedCost: 12,
+                growthTime: 8,
+                plantingInfo: 'Orange trees need full sun and well-drained soil. Protect from frost in colder climates.'
+            },
+            {
+                name: 'Grapes',
+                color: '#ba68c8',
+                seedCost: 7,
+                growthTime: 5,
+                plantingInfo: 'Grapes need a sunny location with good air circulation. Plant in well-drained soil.'
+            },
+            {
+                name: 'Watermelon',
+                color: '#81c784',
+                seedCost: 6,
+                growthTime: 4,
+                plantingInfo: 'Watermelons need warm soil and plenty of space to spread. Plant in hills with rich soil.'
+            },
+            {
+                name: 'Blueberry',
+                color: '#64b5f6',
+                seedCost: 9,
+                growthTime: 5,
+                plantingInfo: 'Blueberries need acidic soil and full sun. Keep soil consistently moist.'
+            },
+            {
+                name: 'Pineapple',
+                color: '#fff176',
+                seedCost: 15,
+                growthTime: 10,
+                plantingInfo: 'Pineapples need warm temperatures and well-drained soil. Can be grown from the top of a pineapple.'
+            },
+            {
+                name: 'Mango',
+                color: '#ffb74d',
+                seedCost: 14,
+                growthTime: 9,
+                plantingInfo: 'Mango trees need tropical or subtropical climates with well-drained soil and full sun.'
+            },
+            {
+                name: 'Cherry',
+                color: '#e57373',
+                seedCost: 11,
+                growthTime: 7,
+                plantingInfo: 'Cherry trees need full sun and well-drained soil. Some varieties need cross-pollination.'
+            },
+            {
+                name: 'Pear',
+                color: '#dce775',
+                seedCost: 10,
+                growthTime: 7,
+                plantingInfo: 'Pear trees need full sun and well-drained soil. Plant in early spring.'
+            },
+            {
+                name: 'Peach',
+                color: '#ffcc80',
+                seedCost: 12,
+                growthTime: 6,
+                plantingInfo: 'Peach trees need full sun and well-drained soil. Protect from spring frosts.'
+            }
+        ];
+
+        // DOM elements
+        const gardenGrid = document.getElementById('gardenGrid');
+        const fruitSelection = document.getElementById('fruitSelection');
+        const waterBtn = document.getElementById('waterBtn');
+        const feedBtn = document.getElementById('feedBtn');
+        const fertilizeBtn = document.getElementById('fertilizeBtn');
+        const harvestBtn = document.getElementById('harvestBtn');
+        const moneyEl = document.getElementById('money');
+        const plantCountEl = document.getElementById('plantCount');
+        const dayCountEl = document.getElementById('dayCount');
+        const inventoryList = document.getElementById('inventoryList');
+        const marketBtn = document.getElementById('marketBtn');
+        const groceryBtn = document.getElementById('groceryBtn');
+        const farmersBtn = document.getElementById('farmersBtn');
+        const educationalModal = document.getElementById('educationalModal');
+        const modalTitle = document.getElementById('modalTitle');
+        const plantingInfo = document.getElementById('plantingInfo');
+        const closeModal = document.getElementById('closeModal');
+        const continueBtn = document.getElementById('continueBtn');
+        const saveBtn = document.getElementById('saveBtn');
+        const newGameBtn = document.getElementById('newGameBtn');
+        const growthTimerEl = document.getElementById('growthTimer');
+
+        // Initialize the game
+        function initGame() {
+            createGardenPlots();
+            createFruitOptions();
+            createEnvironment();
+            startGrowthTimer();
+            updateUI();
+            loadGame();
+        }
+
+        // Create garden plots
+        function createGardenPlots() {
+            gardenGrid.innerHTML = '';
+            for (let i = 0; i < 12; i++) {
+                const plot = document.createElement('div');
+                plot.className = 'garden-plot';
+                plot.dataset.index = i;
+                
+                plot.addEventListener('click', () => handlePlotClick(i));
+                
+                gardenGrid.appendChild(plot);
+                updatePlot(i);
+            }
+        }
+
+        // Create fruit selection options
+        function createFruitOptions() {
+            fruitSelection.innerHTML = '';
+            fruits.forEach((fruit, index) => {
+                const option = document.createElement('div');
+                option.className = 'fruit-option';
+                option.textContent = fruit.name;
+                option.dataset.index = index;
+                
+                option.addEventListener('click', () => {
+                    // Remove selected class from all options
+                    document.querySelectorAll('.fruit-option').forEach(opt => {
+                        opt.classList.remove('selected');
+                    });
+                    
+                    // Add selected class to clicked option
+                    option.classList.add('selected');
+                    gameState.selectedFruit = index;
+                });
+                
+                fruitSelection.appendChild(option);
+            });
+        }
+
+        // Create environmental elements (trees, clouds)
+        function createEnvironment() {
+            const gardenSection = document.querySelector('.garden-section');
+            
+            // Create clouds
+            for (let i = 0; i < 5; i++) {
+                const cloud = document.createElement('div');
+                cloud.className = 'cloud environment';
+                cloud.style.width = `${Math.random() * 100 + 50}px`;
+                cloud.style.height = `${Math.random() * 40 + 20}px`;
+                cloud.style.top = `${Math.random() * 100}px`;
+                cloud.style.left = `${Math.random() * 100}%`;
+                cloud.style.animationDuration = `${Math.random() * 20 + 20}s`;
+                gardenSection.appendChild(cloud);
+            }
+            
+            // Create trees in the background
+            for (let i = 0; i < 3; i++) {
+                const tree = document.createElement('div');
+                tree.className = 'tree environment';
+                tree.style.left = `${Math.random() * 80 + 10}%`;
+                
+                const trunk = document.createElement('div');
+                trunk.className = 'tree-trunk';
+                
+                const top = document.createElement('div');
+                top.className = 'tree-top';
+                
+                tree.appendChild(trunk);
+                tree.appendChild(top);
+                gardenSection.appendChild(tree);
+            }
+        }
+
+        // Handle plot click
+        function handlePlotClick(index) {
+            if (gameState.garden[index] === null && gameState.selectedFruit !== null) {
+                const fruit = fruits[gameState.selectedFruit];
+                
+                if (gameState.money >= fruit.seedCost) {
+                    gameState.garden[index] = {
+                        fruitIndex: gameState.selectedFruit,
+                        stage: 0,
+                        water: 0,
+                        nutrients: 0,
+                        growth: 0
+                    };
+                    
+                    gameState.money -= fruit.seedCost;
+                    updatePlot(index);
+                    updateUI();
+                    
+                    // Show educational modal
+                    showEducationalModal(fruit);
+                } else {
+                    alert("Not enough money to buy seeds!");
+                }
+            } else if (gameState.garden[index] !== null) {
+                // Plant is already here, maybe show info or do nothing
+            }
+        }
+
+        // Show educational modal with planting information
+        function showEducationalModal(fruit) {
+            modalTitle.textContent = `How to Grow ${fruit.name}`;
+            plantingInfo.innerHTML = `
+                <h3>Planting Guide</h3>
+                <p>${fruit.plantingInfo}</p>
+                <h3>Plant Parts</h3>
+                <ul>
+                    <li><strong>Roots:</strong> Absorb water and nutrients from soil</li>
+                    <li><strong>Stem:</strong> Supports plant and transports nutrients</li>
+                    <li><strong>Leaves:</strong> Use sunlight to make food (photosynthesis)</li>
+                    <li><strong>Flowers:</strong> Produce fruits and seeds</li>
+                    <li><strong>Fruits:</strong> Protect seeds and help with dispersal</li>
+                </ul>
+            `;
+            educationalModal.style.display = 'flex';
+        }
+
+        // Update a specific garden plot
+        function updatePlot(index) {
+            const plot = gardenGrid.children[index];
+            plot.innerHTML = '';
+            
+            const plant = gameState.garden[index];
+            
+            if (plant === null) {
+                // Empty plot
+                const soil = document.createElement('div');
+                soil.className = 'soil';
+                plot.appendChild(soil);
+                return;
+            }
+            
+            const fruit = fruits[plant.fruitIndex];
+            const plantDiv = document.createElement('div');
+            plantDiv.className = 'plant';
+            
+            // Add soil
+            const soil = document.createElement('div');
+                soil.className = 'soil';
+            plantDiv.appendChild(soil);
+            
+            // Add roots (only visible in early stages)
+            if (plant.stage < 2) {
+                const root = document.createElement('div');
+                root.className = 'root';
+                root.style.height = `${10 + plant.stage * 5}px`;
+                plantDiv.appendChild(root);
+            }
+            
+            // Add stem
+            const stem = document.createElement('div');
+            stem.className = 'stem';
+            stem.style.height = `${20 + plant.stage * 15}px`;
+            plantDiv.appendChild(stem);
+            
+            // Add leaves (more leaves as plant grows)
+            if (plant.stage >= 1) {
+                const leafCount = plant.stage;
+                for (let i = 0; i < leafCount; i++) {
+                    const leaf = document.createElement('div');
+                    leaf.className = 'leaf';
+                    leaf.style.left = `${i % 2 === 0 ? -10 : 15}px`;
+                    leaf.style.bottom = `${30 + i * 10}px`;
+                    leaf.style.transform = `rotate(${i % 2 === 0 ? -20 : 20}deg)`;
+                    plantDiv.appendChild(leaf);
+                }
+            }
+            
+            // Add flower (in flowering stage)
+            if (plant.stage === 3) {
+                const flower = document.createElement('div');
+                flower.className = 'flower';
+                flower.style.backgroundColor = fruit.color;
+                flower.style.bottom = `${50 + plant.stage * 15}px`;
+                plantDiv.appendChild(flower);
+            }
+            
+            // Add fruit (in fruiting stage)
+            if (plant.stage === 4) {
+                const fruitEl = document.createElement('div');
+                fruitEl.className = 'fruit';
+                fruitEl.style.backgroundColor = fruit.color;
+                fruitEl.style.bottom = `${50 + plant.stage * 15}px`;
+                fruitEl.innerHTML = fruit.name.substring(0, 2);
+                fruitEl.style.display = 'flex';
+                fruitEl.style.justifyContent = 'center';
+                fruitEl.style.alignItems = 'center';
+                fruitEl.style.color = 'white';
+                fruitEl.style.fontSize = '10px';
+                fruitEl.style.fontWeight = 'bold';
+                plantDiv.appendChild(fruitEl);
+            }
+            
+            plot.appendChild(plantDiv);
+        }
+
+        // Update the UI
+        function updateUI() {
+            moneyEl.textContent = `$${gameState.money}`;
+            
+            const plantCount = gameState.garden.filter(plot => plot !== null).length;
+            plantCountEl.textContent = `${plantCount}/12`;
+            
+            dayCountEl.textContent = gameState.day;
+            
+            // Update inventory display
+            if (Object.keys(gameState.inventory).length === 0) {
+                inventoryList.textContent = 'No fruits harvested yet.';
+            } else {
+                let inventoryText = '';
+                for (const [fruitName, count] of Object.entries(gameState.inventory)) {
+                    inventoryText += `${fruitName}: ${count} `;
+                }
+                inventoryList.textContent = inventoryText;
+            }
+        }
+
+        // Start the growth timer
+        function startGrowthTimer() {
+            clearInterval(gameState.growthInterval);
+            
+            gameState.growthInterval = setInterval(() => {
+                gameState.growthTimer--;
+                
+                // Update timer display
+                const minutes = Math.floor(gameState.growthTimer / 60);
+                const seconds = gameState.growthTimer % 60;
+                growthTimerEl.textContent = `Next growth in: ${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
+                
+                // When timer reaches 0, grow all plants and reset timer
+                if (gameState.growthTimer <= 0) {
+                    growAllPlants();
+                    gameState.growthTimer = 180; // Reset to 3 minutes
+                    gameState.day++;
+                }
+            }, 1000);
+        }
+
+        // Grow all plants by one stage
+        function growAllPlants() {
+            let plantsGrew = false;
+            
+            for (let i = 0; i < gameState.garden.length; i++) {
+                const plant = gameState.garden[i];
+                if (plant === null) continue;
+                
+                // Only grow if not at final stage
+                if (plant.stage < 4) {
+                    plant.stage++;
+                    plantsGrew = true;
+                    updatePlot(i);
+                }
+            }
+            
+            if (plantsGrew) {
+                updateUI();
+            }
+        }
+
+        // Handle action buttons
+        waterBtn.addEventListener('click', () => {
+            performAction('water');
+        });
+        
+        feedBtn.addEventListener('click', () => {
+            performAction('feed');
+        });
+        
+        fertilizeBtn.addEventListener('click', () => {
+            performAction('fertilize');
+        });
+        
+        harvestBtn.addEventListener('click', () => {
+            performAction('harvest');
+        });
+
+        // Perform an action on all plants
+        function performAction(action) {
+            let actionPerformed = false;
+            
+            for (let i = 0; i < gameState.garden.length; i++) {
+                const plant = gameState.garden[i];
+                if (plant === null) continue;
+                
+                switch (action) {
+                    case 'water':
+                        if (plant.water < 100) {
+                            plant.water += 20;
+                            if (plant.water > 100) plant.water = 100;
+                            actionPerformed = true;
+                        }
+                        break;
+                    case 'feed':
+                        if (plant.nutrients < 100) {
+                            plant.nutrients += 15;
+                            if (plant.nutrients > 100) plant.nutrients = 100;
+                            actionPerformed = true;
+                        }
+                        break;
+                    case 'fertilize':
+                        if (plant.nutrients < 100) {
+                            plant.nutrients += 30;
+                            if (plant.nutrients > 100) plant.nutrients = 100;
+                            actionPerformed = true;
+                        }
+                        break;
+                    case 'harvest':
+                        if (plant.stage === 4) {
+                            // Harvest the fruit
+                            const fruitName = fruits[plant.fruitIndex].name;
+                            gameState.inventory[fruitName] = (gameState.inventory[fruitName] || 0) + 1;
+                            gameState.garden[i] = null;
+                            actionPerformed = true;
+                        }
+                        break;
+                }
+                
+                // Update growth based on care - care actions now speed up growth
+                if (action !== 'harvest' && plant.stage < 4) {
+                    // Increase growth chance with good care
+                    const growthChance = (plant.water / 100) * (plant.nutrients / 100);
+                    if (Math.random() < growthChance * 0.3) {
+                        plant.stage++;
+                        updatePlot(i);
+                    }
+                }
+            }
+            
+            if (actionPerformed) {
+                updateUI();
+            } else {
+                if (action === 'harvest') {
+                    alert('No fruits ready for harvest!');
+                } else {
+                    alert('All plants are fully cared for!');
+                }
+            }
+        }
+
+        // Handle market buttons
+        marketBtn.addEventListener('click', () => sellFruits('market'));
+        groceryBtn.addEventListener('click', () => sellFruits('grocery'));
+        farmersBtn.addEventListener('click', () => sellFruits('farmers'));
+
+        // Sell fruits at selected market
+        function sellFruits(marketType) {
+            if (Object.keys(gameState.inventory).length === 0) {
+                alert('No fruits to sell!');
+                return;
+            }
+            
+            let totalEarnings = 0;
+            let soldFruits = [];
+            
+            for (const [fruitName, count] of Object.entries(gameState.inventory)) {
+                const fruit = fruits.find(f => f.name === fruitName);
+                if (fruit) {
+                    const priceRange = gameState.prices[marketType];
+                    const price = Math.floor(Math.random() * (priceRange.max - priceRange.min + 1)) + priceRange.min;
+                    const earnings = price * count;
+                    totalEarnings += earnings;
+                    soldFruits.push(`${count} ${fruitName} for $${earnings}`);
+                }
+            }
+            
+            gameState.money += totalEarnings;
+            gameState.inventory = {};
+            
+            alert(`Sold at ${marketType}:\n${soldFruits.join('\n')}\n\nTotal: $${totalEarnings}`);
+            updateUI();
+        }
+
+        // Handle modal
+        closeModal.addEventListener('click', () => {
+            educationalModal.style.display = 'none';
+        });
+        
+        continueBtn.addEventListener('click', () => {
+            educationalModal.style.display = 'none';
+        });
+
+        // Save game to local storage
+        saveBtn.addEventListener('click', () => {
+            // Save growth timer state
+            const saveData = {
+                ...gameState,
+                growthTimer: gameState.growthTimer // Save current timer value
+            };
+            localStorage.setItem('plantGrowthSimulator', JSON.stringify(saveData));
+            alert('Game saved!');
+        });
+
+        // Load game from local storage
+        function loadGame() {
+            const savedGame = localStorage.getItem('plantGrowthSimulator');
+            if (savedGame) {
+                const parsedGame = JSON.parse(savedGame);
+                Object.assign(gameState, parsedGame);
+                
+                // Update all plots
+                for (let i = 0; i < gameState.garden.length; i++) {
+                    updatePlot(i);
+                }
+                
+                // Restart the growth timer with saved time
+                startGrowthTimer();
+                updateUI();
+            }
+        }
+
+        // Start new game
+        newGameBtn.addEventListener('click', () => {
+            if (confirm('Are you sure you want to start a new game? Your current progress will be lost.')) {
+                // Reset game state
+                gameState.money = 50;
+                gameState.day = 1;
+                gameState.selectedFruit = null;
+                gameState.garden = Array(12).fill(null);
+                gameState.inventory = {};
+                gameState.growthTimer = 180;
+                
+                // Update UI
+                createGardenPlots();
+                startGrowthTimer();
+                updateUI();
+                
+                // Clear selection
+                document.querySelectorAll('.fruit-option').forEach(opt => {
+                    opt.classList.remove('selected');
+                });
+            }
+        });
+
+        // Initialize the game when page loads
+        window.addEventListener('load', initGame);
+    </script>
+</body>
+</html>
