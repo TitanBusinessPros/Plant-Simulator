@@ -59,6 +59,8 @@
             border: 3px solid #7a9c58;
             position: relative;
             overflow: hidden;
+            display: flex;
+            flex-direction: column;
         }
 
         .info-section {
@@ -76,6 +78,7 @@
             grid-template-columns: repeat(4, 1fr);
             grid-gap: 15px;
             margin-top: 20px;
+            flex-grow: 1;
         }
 
         .garden-plot {
@@ -406,6 +409,7 @@
             box-shadow: 0 0 20px rgba(255, 255, 255, 0.8);
             opacity: 0.8;
             animation: float 30s infinite linear;
+            z-index: 1;
         }
 
         .tree {
@@ -413,6 +417,7 @@
             bottom: 0;
             width: 80px;
             height: 120px;
+            z-index: 1;
         }
 
         .tree-trunk {
@@ -449,6 +454,13 @@
             border-radius: 10px;
             text-align: center;
             font-weight: bold;
+            position: relative;
+            z-index: 2;
+        }
+
+        .garden-content {
+            position: relative;
+            z-index: 2;
         }
 
         @media (max-width: 768px) {
@@ -466,45 +478,47 @@
     <div class="container">
         <header>
             <h1>Plant Growth Simulator</h1>
-            <p>Grow fruits, learn about plants, and sell your harvest!</p>
+            <p>Grow fruits, learn about plants, and sell your harvest! Intro to Agriculture Economics by Titan Business Pros LLC</p>
         </header>
 
         <div class="game-area">
             <div class="garden-section">
                 <h2>Your Garden</h2>
-                <div class="garden-grid" id="gardenGrid">
-                    <!-- Garden plots will be generated here -->
-                </div>
-                
-                <div class="actions">
-                    <button class="action-btn water" id="waterBtn">💧 Water</button>
-                    <button class="action-btn feed" id="feedBtn">🌱 Feed</button>
-                    <button class="action-btn fertilize" id="fertilizeBtn">🧪 Fertilize</button>
-                    <button class="action-btn" id="harvestBtn">✂️ Harvest</button>
-                </div>
-                
-                <div class="stats">
-                    <div class="stat">
-                        <div class="stat-label">Money</div>
-                        <div class="stat-value" id="money">$50</div>
+                <div class="garden-content">
+                    <div class="garden-grid" id="gardenGrid">
+                        <!-- Garden plots will be generated here -->
                     </div>
-                    <div class="stat">
-                        <div class="stat-label">Plants</div>
-                        <div class="stat-value" id="plantCount">0/12</div>
+                    
+                    <div class="actions">
+                        <button class="action-btn water" id="waterBtn">💧 Water</button>
+                        <button class="action-btn feed" id="feedBtn">🌱 Feed</button>
+                        <button class="action-btn fertilize" id="fertilizeBtn">🧪 Fertilize</button>
+                        <button class="action-btn" id="harvestBtn">✂️ Harvest</button>
                     </div>
-                    <div class="stat">
-                        <div class="stat-label">Day</div>
-                        <div class="stat-value" id="dayCount">1</div>
+                    
+                    <div class="stats">
+                        <div class="stat">
+                            <div class="stat-label">Money</div>
+                            <div class="stat-value" id="money">$50</div>
+                        </div>
+                        <div class="stat">
+                            <div class="stat-label">Plants</div>
+                            <div class="stat-value" id="plantCount">0/12</div>
+                        </div>
+                        <div class="stat">
+                            <div class="stat-label">Day</div>
+                            <div class="stat-value" id="dayCount">1</div>
+                        </div>
                     </div>
-                </div>
-                
-                <div class="growth-timer" id="growthTimer">
-                    Next growth in: 3:00
-                </div>
-                
-                <div class="save-options">
-                    <button class="save-btn" id="saveBtn">Save Game</button>
-                    <button class="save-btn new-game" id="newGameBtn">New Game</button>
+                    
+                    <div class="growth-timer" id="growthTimer">
+                        Next growth in: 3:00
+                    </div>
+                    
+                    <div class="save-options">
+                        <button class="save-btn" id="saveBtn">Save Game</button>
+                        <button class="save-btn new-game" id="newGameBtn">New Game</button>
+                    </div>
                 </div>
             </div>
             
@@ -835,7 +849,7 @@
             
             // Add soil
             const soil = document.createElement('div');
-                soil.className = 'soil';
+            soil.className = 'soil';
             plantDiv.appendChild(soil);
             
             // Add roots (only visible in early stages)
